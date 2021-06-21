@@ -1,0 +1,10 @@
+{
+  "source" : "Manual",
+  "framework" : "GUI",
+  "terraform_run" : {
+    "run_name" : "azure_run_5",
+    "workspace" : "terraform_cloud_azure_demo"
+  },
+  "examples" : ["query", "form", "json"],
+  "boolean_test" : true
+}

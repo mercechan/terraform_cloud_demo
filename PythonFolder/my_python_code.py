@@ -32,4 +32,4 @@ if __name__ == '__main__':
     work_space = 'terraform_cloud_azure_demo'
 
     # get_vars_from_workspace(work_space)
-    create_terraform_cloud_run(work_space, 'azure_run_3')
+    create_terraform_cloud_run(work_space, 'azure_run_4')
