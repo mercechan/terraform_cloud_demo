@@ -1,0 +1,20 @@
+-- build docker images
+docker build -t mercechan/tc_ctrlr:v6 .
+docker push mercechan/tc_ctrlr:v6
+
+
+-- sign in azure
+az login
+az account set -s "MySubscriptionName Here"
+az account set -s "Azure subscription 1"
+
+
+-- create resource group
+az group create -n "terraform_cloud_demo_rg" -l "westus"
+-- create container
+az container create -g "terraform_cloud_demo_rg" -n "tc-ctrlr-01" --image mercechan/tc_ctrlr:v6 --ports 5000 --ip-address public --dns-name-label tcloud
+-- tailing logs
+az container logs -n "tc-ctrlr-01" -g "terraform_cloud_demo_rg" --follow
+
+-- clean up
+az group delete -n "terraform_cloud_demo_rg" -y

@@ -2,8 +2,9 @@
   "source" : "ServiceNow",
   "framework" : "WorkFlow",
   "terraform_run" : {
-    "run_name" : "azure_run",
-    "workspace" : "terraform_cloud_azure_demo",
-    "rg_name" : "terraform_cloud_rg"
- }
+    "run_name" : "aws_run",
+    "workspace" : "terraform_cloud_aws_demo",
+    "subnet_tag" : "dev_subnet1",
+    "subnet_cidr": "10.0.2.0/24"
+  }
 }
