@@ -1,0 +1,9 @@
+{
+  "source" : "ServiceNow",
+  "framework" : "WorkFlow",
+  "terraform_run" : {
+    "run_name" : "azure_run",
+    "workspace" : "terraform_cloud_azure_demo",
+    "rg_name" : "terraform_cloud_rg"
+  }
+}
