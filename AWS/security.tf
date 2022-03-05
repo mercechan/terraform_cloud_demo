@@ -1,6 +1,6 @@
 #Create a virtual network
 resource "aws_vpc" "node-red-vpc-vpc" {
-  cidr_block                       = "10.0.0.0/16"
+  cidr_block = "10.0.0.0/16"
   tags = {
     Name = "node-red-vpc-vpc"
   }
@@ -48,9 +48,9 @@ resource "aws_internet_gateway" "node-red-vpc-igw" {
 
 #Add default route in routing table to point to Internet Gateway
 resource "aws_route" "default_route" {
-  route_table_id = aws_route_table.node-red-vpc-rtb-public1-us-west-1a.id
+  route_table_id         = aws_route_table.node-red-vpc-rtb-public1-us-west-1a.id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id = aws_internet_gateway.node-red-vpc-igw.id
+  gateway_id             = aws_internet_gateway.node-red-vpc-igw.id
 }
 
 
@@ -81,3 +81,6 @@ resource "aws_security_group" "nodered-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+
+
