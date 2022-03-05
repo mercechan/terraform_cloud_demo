@@ -9,9 +9,9 @@ resource "aws_instance" "Web" {
   tags = {
     Name = "Node-Red-Server"
   }
-  count           = 1
-  key_name        = "generic-ssh-key"
-  subnet_id = aws_subnet.node-red-vpc-subnet-public1-us-west-1a.id 
+  count                  = 1
+  key_name               = "generic-ssh-key"
+  subnet_id              = aws_subnet.node-red-vpc-subnet-public1-us-west-1a.id
   vpc_security_group_ids = [aws_security_group.nodered-sg.id]
 
   provisioner "remote-exec" {
@@ -27,4 +27,3 @@ resource "aws_instance" "Web" {
     ]
   }
 }
-
