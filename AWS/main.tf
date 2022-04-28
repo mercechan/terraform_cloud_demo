@@ -23,7 +23,7 @@ resource "aws_instance" "Web" {
     }
 
     inline = [
-      "docker run -it -p 1880:1880  --name mynodered nodered/node-red"
+      "docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
     ]
   }
 }
