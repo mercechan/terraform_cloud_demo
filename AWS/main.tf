@@ -23,7 +23,7 @@ resource "aws_instance" "Web" {
     }
 
     inline = [
-      "docker run -d -p 80:80 --name licensesvr mercechan/license-server:v3",
+      "docker run -d -p 80:80 --name licensesvr mercechan/license-server:v1",
       "docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
     ]
   }
