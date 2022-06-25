@@ -1,13 +1,13 @@
 variable "aws_region" {
   type    = string
-  default = "eu-west-1"
+  default = "us-west-1"
 }
 
 # AWS AZ
 variable "aws_az" {
   type        = string
   description = "AWS AZ"
-  default     = "eu-west-1a"
+  default     = "us-west-1a"
 }
 
 # VPC Variables
