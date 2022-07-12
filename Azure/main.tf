@@ -18,122 +18,182 @@ provider "azurerm" {
 }
 
 
-# Create a resource group for core
-resource "azurerm_resource_group" "core-rg" {
-  name     = "MC4615-vFW-core-rg"
-  location = "eastus2"
+# Create a resource group if it doesn't exist
+resource "azurerm_resource_group" "myterraformgroup" {
+  name     = "myResourceGroup"
+  location = "westus"
+
   tags = {
-    business_owner   = "mc4615"
-    environment      = "Core"
-    application_name = "vFW_demo_app"
+    environment = "Terraform Demo"
   }
 }
 
-# Create the core VNET
-resource "azurerm_virtual_network" "core-vnet" {
-  name                = "MC4615-vFW-core-vnet"
-  address_space       = ["10.10.0.0/16"]
-  resource_group_name = azurerm_resource_group.core-rg.name
-  location            = azurerm_resource_group.core-rg.location
+# Create virtual network
+resource "azurerm_virtual_network" "myterraformnetwork" {
+  name                = "myVnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = "westus"
+  resource_group_name = azurerm_resource_group.myterraformgroup.name
+
   tags = {
-    environment = "Core"
+    environment = "Terraform Demo"
   }
 }
 
-# Create a subnet for Azure Firewall
-# Note: The Subnet used for the Firewall must have the mandatory name AzureFirewallSubnet 
-# and requires at least a /26 subnet size.
-resource "azurerm_subnet" "AzureFirewallSubnet" {
-  name                 = "AzureFirewallSubnet" # mandatory name -do not rename-
-  address_prefix       = "10.10.1.0/26"
-  virtual_network_name = azurerm_virtual_network.core-vnet.name
-  resource_group_name  = azurerm_resource_group.core-rg.name
+# Create subnet
+resource "azurerm_subnet" "myterraformsubnet" {
+  name                 = "mySubnet"
+  resource_group_name  = azurerm_resource_group.myterraformgroup.name
+  virtual_network_name = azurerm_virtual_network.myterraformnetwork.name
+  address_prefixes       = ["10.0.1.0/24"]
 }
 
-# Create the public ip for Azure Firewall
-resource "azurerm_public_ip" "azure_firewall_pip" {
-  name                = "MC4615-vFW-core-azure-firewall-pip"
-  resource_group_name = azurerm_resource_group.core-rg.name
-  location            = azurerm_resource_group.core-rg.location
-  allocation_method   = "Static"
-  sku                 = "Standard"
+# Create public IPs
+resource "azurerm_public_ip" "myterraformpublicip" {
+  name                         = "myPublicIP"
+  location                     = "westus"
+  resource_group_name          = azurerm_resource_group.myterraformgroup.name
+  allocation_method            = "Dynamic"
+
   tags = {
-    environment = "Core"
+    environment = "Terraform Demo"
   }
 }
 
-# Create the Azure Firewall
-resource "azurerm_firewall" "azure_firewall" {
-  depends_on          = [azurerm_public_ip.azure_firewall_pip]
-  name                = "MC4615-vFW-core-azure-firewall"
-  resource_group_name = azurerm_resource_group.core-rg.name
-  location            = azurerm_resource_group.core-rg.location
+# Create Network Security Group and rule
+resource "azurerm_network_security_group" "myterraformnsg" {
+  name                = "myNetworkSecurityGroup"
+  location            = "westus"
+  resource_group_name = azurerm_resource_group.myterraformgroup.name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = {
+    environment = "Terraform Demo"
+  }
+}
+
+resource "azurerm_network_security_rule" "myhttprule" {
+  name                       = "HTTP"
+  direction                  = "Inbound"
+  access                     = "Allow"
+  priority                   = "1002"
+  source_address_prefix      = "*"
+  source_port_range          = "*"
+  destination_address_prefix = "*"
+  destination_port_range     = "1880"
+  protocol                   = "Tcp"
+  resource_group_name = azurerm_resource_group.myterraformgroup.name
+  network_security_group_name = azurerm_network_security_group.myterraformnsg.name
+
+}
+
+# Create network interface
+resource "azurerm_network_interface" "myterraformnic" {
+  name                      = "myNIC"
+  location                  = "westus"
+  resource_group_name       = azurerm_resource_group.myterraformgroup.name
+
   ip_configuration {
-    name                 = "hg-eastus2-core-azure-firewall-config"
-    subnet_id            = azurerm_subnet.AzureFirewallSubnet.id
-    public_ip_address_id = azurerm_public_ip.azure_firewall_pip.id
+    name                          = "myNicConfiguration"
+    subnet_id                     = azurerm_subnet.myterraformsubnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.myterraformpublicip.id
   }
 
   tags = {
-    environment = "Core"
+    environment = "Terraform Demo"
   }
 }
 
-# create some rules for the firewall
-# 1. Create a Azure Firewall Network Rule for DNS
-# Resolve DNS queries using Google Public DNS IP addresses
-resource "azurerm_firewall_network_rule_collection" "fw-net-dns" {
-  name                = "MC4615-vFW-azure-firewall-dns-rule"
-  azure_firewall_name = azurerm_firewall.azure_firewall.name
-  resource_group_name = azurerm_resource_group.core-rg.name
-  priority            = 100
-  action              = "Allow"
-  rule {
-    name                  = "DNS"
-    source_addresses      = ["10.0.0.0/16"]
-    destination_ports     = ["53"]
-    destination_addresses = ["8.8.8.8", "8.8.4.4"]
-    protocols             = ["TCP", "UDP"]
+# Connect the security group to the network interface
+resource "azurerm_network_interface_security_group_association" "example" {
+  network_interface_id      = azurerm_network_interface.myterraformnic.id
+  network_security_group_id = azurerm_network_security_group.myterraformnsg.id
+}
+
+# Generate random text for a unique storage account name
+resource "random_id" "randomId" {
+  keepers = {
+    # Generate a new ID only when a new resource group is defined
+    resource_group = azurerm_resource_group.myterraformgroup.name
+  }
+
+  byte_length = 8
+}
+
+# Create storage account for boot diagnostics
+resource "azurerm_storage_account" "mystorageaccount" {
+  name                        = "diag${random_id.randomId.hex}"
+  resource_group_name         = azurerm_resource_group.myterraformgroup.name
+  location                    = "westus"
+  account_tier                = "Standard"
+  account_replication_type    = "LRS"
+
+  tags = {
+    environment = "Terraform Demo"
   }
 }
 
-# 2. Create a Azure Firewall Network Rule for Web access
-# Access websites using HTTP and HTTPS protocols
-resource "azurerm_firewall_network_rule_collection" "fw-net-web" {
-  name                = "MC4615-vFW-azure-firewall-web-rule"
-  azure_firewall_name = azurerm_firewall.azure_firewall.name
-  resource_group_name = azurerm_resource_group.core-rg.name
-  priority            = 101
-  action              = "Allow"
-  rule {
-    name                  = "HTTP"
-    source_addresses      = ["10.0.0.0/16"]
-    destination_ports     = ["80"]
-    destination_addresses = ["*"]
-    protocols             = ["TCP"]
-  }
-  rule {
-    name                  = "HTTPS"
-    source_addresses      = ["10.0.0.0/16"]
-    destination_ports     = ["443"]
-    destination_addresses = ["*"]
-    protocols             = ["TCP"]
-  }
-}
+# Create virtual machine
+resource "azurerm_linux_virtual_machine" "myterraformvm" {
+  name                  = "myVM"
+  location              = "westus"
+  resource_group_name   = azurerm_resource_group.myterraformgroup.name
+  network_interface_ids = [azurerm_network_interface.myterraformnic.id]
+  size                  = "Standard_DS1_v2"
 
-# 3. Create a Azure Firewall Network Rule for Azure Active Directoy
-# Azure Firewall blocks Active Directory access by default
-resource "azurerm_firewall_network_rule_collection" "fw-net-azure-ad" {
-  name                = "MC4615-vFW-azure-firewall-azure-ad-rule"
-  azure_firewall_name = azurerm_firewall.azure_firewall.name
-  resource_group_name = azurerm_resource_group.core-rg.name
-  priority            = 104
-  action              = "Allow"
-  rule {
-    name                  = "Azure-AD"
-    source_addresses      = ["10.0.0.0/16"]
-    destination_ports     = ["25"]
-    destination_addresses = ["AzureActiveDirectory"]
-    protocols             = ["TCP", "UDP"]
+  os_disk {
+    name              = "myOsDisk"
+    caching           = "ReadWrite"
+    storage_account_type = "Premium_LRS"
   }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  computer_name  = "myvm"
+  admin_username = "azureuser"
+  disable_password_authentication = true
+
+  boot_diagnostics {
+    storage_account_uri = azurerm_storage_account.mystorageaccount.primary_blob_endpoint
+  }
+
+  tags = {
+    environment = "Terraform Demo"
+  }
+
+  connection {
+    host = self.public_ip_address
+    user = "azureuser"
+    type = "ssh"
+    private_key = file("${path.module}/keyfiles/generic-ssh-key.pem")
+    timeout = "4m"
+    agent = false
+  }
+
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt-get update -y",
+      "sudo apt-get install docker.io -y",
+      "sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
+    ]
+  }
+
 }
