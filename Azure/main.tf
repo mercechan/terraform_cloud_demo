@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "<=2.0.0"
+      version = "<=1.2.4"
     }
   }
 }
@@ -145,6 +145,16 @@ resource "azurerm_storage_account" "mystorageaccount" {
   }
 }
 
+# Create (and display) an SSH key
+resource "tls_private_key" "example_ssh" {
+  algorithm = "RSA"
+  rsa_bits = 4096
+}
+output "tls_private_key" {
+  value = tls_private_key.example_ssh.private_key_pem
+  sensitive = true
+}
+
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
   name                  = "myVM"
@@ -170,6 +180,11 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
   admin_username = "azureuser"
   disable_password_authentication = true
 
+  admin_ssh_key {
+    username       = "azureuser"
+    public_key     = file("${path.module}/keyfiles/id_rsa.pub")
+  }
+
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.mystorageaccount.primary_blob_endpoint
   }
@@ -182,7 +197,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
     host = self.public_ip_address
     user = "azureuser"
     type = "ssh"
-    private_key = file("${path.module}/keyfiles/generic-ssh-key.pem")
+    private_key = file("${path.module}/keyfiles/id_rsa")
     timeout = "4m"
     agent = false
   }
@@ -195,5 +210,4 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
       "sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
     ]
   }
-
 }
