@@ -3,6 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
+      version = "<=2.0.0"
     }
   }
 }
@@ -205,8 +206,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
   provisioner "remote-exec" {
     inline = [
       "sudo apt-get update -y",
-      "sleep 5",
-      "sudo apt-get install docker.io -y",
+      "sudo apt-get install -y docker.io",
       "sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
     ]
   }
