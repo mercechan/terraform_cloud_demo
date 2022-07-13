@@ -144,16 +144,6 @@ resource "azurerm_storage_account" "mystorageaccount" {
   }
 }
 
-# Create (and display) an SSH key
-resource "tls_private_key" "example_ssh" {
-  algorithm = "RSA"
-  rsa_bits = 4096
-}
-output "tls_private_key" {
-  value = tls_private_key.example_ssh.private_key_pem
-  sensitive = true
-}
-
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
   name                  = "myVM"
@@ -204,9 +194,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo apt-get update -y",
-      "sudo apt-get install -y docker.io",
-      "sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
+      "sudo apt-get update -y && sudo apt-get update -y && sudo apt-get update -y && echo 'update completed.. sleep for 5' && sleep 5 && sudo apt-get install docker.io -y && echo 'docker engine installed .. sleep for 5 seconds' && sleep 5 && sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
     ]
   }
 }
