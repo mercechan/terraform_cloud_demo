@@ -110,6 +110,7 @@ resource "azurerm_network_interface" "myterraformnic" {
     public_ip_address_id          = azurerm_public_ip.myterraformpublicip.id
   }
 
+  depends_on                      = [azurerm_subnet.myterraformsubnet, azurerm_public_ip.myterraformpublicip]
   tags = {
     environment = "Terraform Demo"
   }
@@ -119,6 +120,7 @@ resource "azurerm_network_interface" "myterraformnic" {
 resource "azurerm_network_interface_security_group_association" "example" {
   network_interface_id      = azurerm_network_interface.myterraformnic.id
   network_security_group_id = azurerm_network_security_group.myterraformnsg.id
+  depends_on                = [azurerm_network_interface.myterraformnic, azurerm_network_security_group.myterraformnsg]
 }
 
 # Generate random text for a unique storage account name
@@ -151,7 +153,9 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
   resource_group_name   = azurerm_resource_group.myterraformgroup.name
   network_interface_ids = [azurerm_network_interface.myterraformnic.id]
   size                  = "Standard_DS1_v2"
-
+  depends_on = [
+    azurerm_network_interface_security_group_association.example
+  ]
   os_disk {
     name              = "myOsDisk"
     caching           = "ReadWrite"
