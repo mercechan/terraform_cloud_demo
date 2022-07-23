@@ -198,7 +198,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo apt-get update -y && sudo apt-get update -y && sudo apt-get update -y && echo 'update completed.. sleep for 5' && sleep 5 && sudo apt-get install docker.io -y && echo 'docker engine installed .. sleep for 5 seconds' && sleep 5 && sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
+      "sudo apt-get update -y && sudo apt-get update -y && echo 'update completed.. sleep for 5' && sleep 5 && sudo apt-get install docker.io -y && echo 'docker engine installed .. sleep for 5 seconds' && sleep 5 && sudo docker run -d -p 1880:1880 -v node_red_data:/data --name mynodered nodered/node-red:latest"
     ]
   }
 }
